@@ -2,7 +2,7 @@
 extern crate combine;
 
 mod parser;
-mod token;
+mod tokenize;
 
 fn main() {
     println!("Hello, world!");
