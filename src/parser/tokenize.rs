@@ -43,11 +43,28 @@ where
     token('|').map(|_| Token::Table)
 }
 
+pub fn list<Input>() -> impl Parser<Input, Output = Token>
+where
+    Input: Stream<Token = char>,
+{
+    token('*')
+        .or(token('+'))
+        .or(token('-'))
+        .map(|_| Token::List)
+}
+
 pub fn header<Input>() -> impl Parser<Input, Output = Token>
 where
     Input: Stream<Token = char>,
 {
     token('#').map(|_| Token::Header)
+}
+
+pub fn image<Input>() -> impl Parser<Input, Output = Token>
+where
+    Input: Stream<Token = char>,
+{
+    token('!').map(|_| Token::Image)
 }
 
 pub fn string<Input>() -> impl Parser<Input, Output = Token>
@@ -91,6 +108,27 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn it_many_expression() {
+        assert_eq!(
+            tokenize().parse(r#"(@ link https://example.com) (" hello world)"#),
+            Ok((
+                vec![
+                    Token::LeftParen,
+                    Token::Link,
+                    Token::string("link"),
+                    Token::string("https://example.com"),
+                    Token::RightParen,
+                    Token::LeftParen,
+                    Token::Text,
+                    Token::string("hello"),
+                    Token::string("world"),
+                    Token::RightParen,
+                ],
+                ""
+            ))
+        )
+    }
     #[test]
     fn it_link_expression() {
         assert_eq!(
@@ -137,6 +175,16 @@ mod tests {
     #[test]
     fn it_text() {
         assert_eq!(text().parse("\""), Ok((Token::Text, "")))
+    }
+    #[test]
+    fn it_list() {
+        assert_eq!(list().parse("+"), Ok((Token::List, "")));
+        assert_eq!(list().parse("-"), Ok((Token::List, "")));
+        assert_eq!(list().parse("*"), Ok((Token::List, "")));
+    }
+    #[test]
+    fn it_image() {
+        assert_eq!(image().parse("!"), Ok((Token::Image, "")))
     }
     #[test]
     fn it_link() {
